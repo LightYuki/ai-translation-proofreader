@@ -1,0 +1,23 @@
+{
+  "summary": {
+    "total_items": 1,
+    "correct_items": 0,
+    "incorrect_items": 1,
+    "accuracy_rate": 0.0,
+    "average_score": 0.0,
+    "issue_statistics": {}
+  },
+  "detailed_reports": [
+    {
+      "original_index": 0,
+      "name": "说话人",
+      "source_text": "这是一个测试文本",
+      "target_text": "Thjs is an testing word.",
+      "is_correct": false,
+      "issues": [],
+      "overall_score": 0,
+      "comment": "处理出错: 'list' object has no attribute 'strip'",
+      "error": "'list' object has no attribute 'strip'"
+    }
+  ]
+}

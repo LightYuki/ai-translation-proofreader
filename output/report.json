@@ -1,0 +1,55 @@
+{
+  "summary": {
+    "total_items": 4,
+    "correct_items": 2,
+    "incorrect_items": 2,
+    "accuracy_rate": 50.0,
+    "average_score": 0.0,
+    "issue_statistics": {},
+    "modification_statistics": {
+      "未知": 4
+    }
+  },
+  "detailed_reports": [
+    {
+      "original_index": 0,
+      "name": "张三",
+      "source_text": "你好，今天天气怎么样？",
+      "target_text": "Hello, hwo is the wether today?",
+      "score": 0,
+      "modified_text": "Hello, how is the weather today?",
+      "comment": "意思大致对应“今天天气怎么样”，但英文有明显拼写错误（hwo/wether），且表达不地道；更自然应为“Hello, how is the weather today?”或直接“How's the weather today?”。",
+      "is_correct": false
+    },
+    {
+      "original_index": 1,
+      "name": "李四",
+      "source_text": "我需要一杯咖啡",
+      "target_text": "I neeed a cup of coffe",
+      "score": 0,
+      "modified_text": "I need a cup of coffee.",
+      "comment": "意思翻译正确，但英文有拼写错误：'neeed'应为'need'，'coffe'应为'coffee'。",
+      "is_correct": true
+    },
+    {
+      "original_index": 0,
+      "name": "说话人",
+      "source_text": "这是一个测试文本",
+      "target_text": "This is a test text.",
+      "score": 0,
+      "modified_text": "This is a test text.",
+      "comment": "译文准确自然，忠实传达“这是一个测试文本”的含义，无明显语法或用词问题。",
+      "is_correct": true
+    },
+    {
+      "original_index": 0,
+      "name": "王五",
+      "source_text": "这个项目什么时候能完成？",
+      "target_text": "When thsi project can be finish?",
+      "score": 0,
+      "modified_text": "When can this project be completed?",
+      "comment": "语序不自然且语法错误较多：thsi拼写错误，应为this；can位置不当；be finish应为be finished或用will be finished。更自然的译法：\"When will this project be finished?\" 或 \"When can this project be finished?\"",
+      "is_correct": false
+    }
+  ]
+}
