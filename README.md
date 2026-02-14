@@ -67,7 +67,13 @@ python main.py
 
 ## ⚙️ 配置说明
 
-在 `config.py` 中可以调整：
+首次使用前，请将 `config_template.py` 复制为 `config.py` 并填写你的API密钥：
+
+```bash
+copy config_template.py config.py
+```
+
+然后在 `config.py` 中配置：
 ```python
 class Config:
     API_KEY = "your-api-key"
