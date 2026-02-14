@@ -124,8 +124,11 @@ def process_file_pair(en_file, zh_file, proofreader):
         print(f"❌ 数据结构验证失败: {e}")
         return None
 
-    print("🔄 正在合并数据...")
-    merged = []
+    print("🔄 正在逐条处理数据...")
+    all_reports = []
+    processed_count = 0
+    
+    # 逐条处理每一对数据
     for i, (s, t) in enumerate(zip(src, tgt)):
         source_field = detect_text_field(s)
         target_field = detect_text_field(t)
@@ -148,47 +151,44 @@ def process_file_pair(en_file, zh_file, proofreader):
                 print(f"⚠ 第{i}条文本内容为空，跳过")
                 continue
                 
-            merged.append({
+            # 创建单条数据进行处理
+            single_item = [{
                 "index": i,
                 "name": s.get("name"),
                 "source": source_text,
                 "target": target_text
-            })
+            }]
             
+            # 对单条数据进行AI校对
+            try:
+                reports = proofreader.proofread_batch(single_item)
+                all_reports.extend(reports)
+                processed_count += 1
+                print(f"✅ 第{i}条处理完成")
+            except Exception as e:
+                print(f"❌ 第{i}条处理失败: {e}")
+                # 为失败的条目创建错误报告
+                all_reports.append({
+                    "original_index": i,
+                    "name": s.get("name"),
+                    "source_text": source_text,
+                    "target_text": target_text,
+                    "score": 0,
+                    "modified_text": target_text,
+                    "comment": f"单条处理失败: {str(e)}",
+                    "is_correct": False,
+                    "error": str(e)
+                })
+                
         except Exception as e:
             print(f"⚠ 第{i}条数据处理出错: {e}")
             continue
 
-    if not merged:
-        print("❌ 没有有效的数据可以处理")
+    if not all_reports:
+        print("❌ 没有成功处理任何数据")
         return None
 
-    print(f"✅ 合并完成，共 {len(merged)} 条待校对")
-
-    all_reports = []
-    print("🤖 开始AI校对...")
-    
-    batch_count = 0
-    for batch in tqdm(list(chunk_list(merged, Config.BATCH_SIZE)), desc="处理批次"):
-        batch_count += 1
-        try:
-            reports = proofreader.proofread_batch(batch)
-            all_reports.extend(reports)
-        except Exception as e:
-            print(f"❌ 批次 {batch_count} 处理失败: {e}")
-            # 为失败的批次创建错误报告
-            for item in batch:
-                all_reports.append({
-                    "original_index": item['index'],
-                    "name": item['name'],
-                    "source_text": item['source'],
-                    "target_text": item['target'],
-                    "score": 0,
-                    "modified_text": item['target'],
-                    "comment": f"批次处理失败: {str(e)}",
-                    "is_correct": False,
-                    "error": str(e)
-                })
+    print(f"✅ 处理完成，共处理 {processed_count} 条数据")
     
     return {
         'src_data': src,
