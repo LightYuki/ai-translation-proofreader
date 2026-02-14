@@ -53,4 +53,3 @@ test_*.py
 
 # Config (excluding template)
 config.py
-!config_template.py
