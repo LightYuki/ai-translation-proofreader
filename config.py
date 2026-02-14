@@ -22,6 +22,10 @@ class Config:
     REQUEST_TIMEOUT = 30     # 请求超时时间(秒)
     POLLING_INTERVAL = 0.5   # 轮询间隔(秒)
     
+    # 文件并行处理配置
+    CONCURRENT_FILES = 3     # 同时处理的文件数量
+    FILE_PROCESSING_TIMEOUT = 300  # 文件处理超时时间(秒)
+    
     # Prompt模板配置
     CHECK_PROMPT_TEMPLATE = """你是专业的翻译校对员，请评估以下翻译质量并返回JSON：
 

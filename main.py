@@ -1,6 +1,8 @@
 import os
 import glob
 from tqdm import tqdm
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import time
 from config import Config
 from utils import load_json, save_json, validate_structure, chunk_list, detect_text_field
 from proofreader import Proofreader
@@ -198,6 +200,59 @@ def process_file_pair(en_file, zh_file, proofreader):
         'filename': os.path.basename(en_file)
     }
 
+def process_file_pair_parallel(pair, proofreader):
+    """并行处理单个文件对的包装函数"""
+    try:
+        result = process_file_pair(pair['en_file'], pair['zh_file'], proofreader)
+        if result:
+            result['base_name'] = pair['base_name']
+        return result
+    except Exception as e:
+        print(f"❌ 文件 {pair['base_name']} 处理异常: {e}")
+        return None
+
+def process_files_concurrently(selected_pairs):
+    """多文件并行处理主函数"""
+    print(f"🔄 启动多文件并行处理，最大并发数: {Config.CONCURRENT_FILES}")
+    
+    # 为每个文件创建独立的Proofreader实例
+    all_results = []
+    completed_count = 0
+    
+    with ThreadPoolExecutor(max_workers=Config.CONCURRENT_FILES) as executor:
+        # 提交所有文件处理任务
+        future_to_pair = {
+            executor.submit(process_file_pair_parallel, pair, Proofreader()): pair 
+            for pair in selected_pairs
+        }
+        
+        # 轮询获取结果
+        completed_futures = set()
+        while len(completed_futures) < len(future_to_pair):
+            for future in future_to_pair:
+                if future not in completed_futures and future.done():
+                    try:
+                        result = future.result(timeout=Config.FILE_PROCESSING_TIMEOUT)
+                        if result:
+                            all_results.append(result)
+                            completed_count += 1
+                            print(f"✅ 文件 {result['base_name']} 处理完成")
+                        else:
+                            pair = future_to_pair[future]
+                            print(f"❌ 文件 {pair['base_name']} 处理失败")
+                        completed_futures.add(future)
+                    except Exception as e:
+                        pair = future_to_pair[future]
+                        print(f"❌ 文件 {pair['base_name']} 处理超时或出错: {e}")
+                        completed_futures.add(future)
+            
+            # 如果还有未完成的任务，短暂休眠
+            if len(completed_futures) < len(future_to_pair):
+                time.sleep(1)
+    
+    print(f"🎯 并行处理完成: {completed_count}/{len(selected_pairs)} 个文件成功处理")
+    return all_results
+
 def run():
     print("🔄 正在扫描输入文件夹...")
     
@@ -234,16 +289,32 @@ def run():
     
     print(f"\n✅ 已选择 {len(selected_pairs)} 个文件对进行处理")
     
-    proofreader = Proofreader()
-    all_results = []
+    # 询问用户是否使用并行处理
+    if len(selected_pairs) > 1:
+        print(f"\n💡 检测到多个文件，可选择并行处理提高效率")
+        print(f"   串行处理: 按顺序逐个处理文件")
+        print(f"   并行处理: 同时处理最多 {Config.CONCURRENT_FILES} 个文件")
+        choice = input("请选择处理方式 (parallel/serial): ").strip().lower()
+        use_parallel = choice == 'parallel'
+    else:
+        use_parallel = False
+        print("\n💡 单个文件，使用串行处理")
     
-    # 处理每个选中的文件对
-    for pair in selected_pairs:
-        result = process_file_pair(pair['en_file'], pair['zh_file'], proofreader)
-        if result:
-            # 添加文件名信息用于报告命名
-            result['base_name'] = pair['base_name']
-            all_results.append(result)
+    if use_parallel:
+        # 使用并行处理
+        all_results = process_files_concurrently(selected_pairs)
+    else:
+        # 使用串行处理
+        proofreader = Proofreader()
+        all_results = []
+        
+        # 处理每个选中的文件对
+        for pair in selected_pairs:
+            result = process_file_pair(pair['en_file'], pair['zh_file'], proofreader)
+            if result:
+                # 添加文件名信息用于报告命名
+                result['base_name'] = pair['base_name']
+                all_results.append(result)
     
     if not all_results:
         print("❌ 没有成功处理任何文件")
